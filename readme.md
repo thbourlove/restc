@@ -4,6 +4,10 @@
 
 ### example
 
+```shell
+go get github.com/thbourlove/restc
+```
+
 ```go
 package main
 
