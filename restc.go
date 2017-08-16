@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/eleme/jsonpath"
@@ -16,11 +17,26 @@ type Client struct {
 	http.Client
 }
 
+func (client *Client) GetJsonDataWithPath(url string, data interface{}, path string) error {
+	req, err := http.NewRequest("GET", "https://api.github.com/users", nil)
+	if err != nil {
+		return errors.Wrap(err, "new request")
+	}
+	return client.FetchJsonDataWithPath(req, data, path)
+}
+
 func (client *Client) FetchJsonDataWithPath(request *http.Request, data interface{}, path string) error {
 	response, err := client.Do(request)
 	if err != nil {
 		return errors.Wrap(err, "client do request")
 	}
+
+	if response.StatusCode < 200 || response.StatusCode > 299 {
+		defer response.Body.Close()
+		bodyBytes, _ := ioutil.ReadAll(response.Body)
+		return fmt.Errorf("error response, code: %d; body: %s", response.StatusCode, string(bodyBytes))
+	}
+
 	defer response.Body.Close()
 
 	p, err := jsonpath.ParsePath(path)
