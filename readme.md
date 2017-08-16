@@ -12,20 +12,14 @@ go get github.com/thbourlove/restc
 package main
 
 import (
-        "log"
-        "net/http"
+	"log"
 
-        "github.com/thbourlove/restc"
+	"github.com/thbourlove/restc"
 )
 
 func main() {
-        client := restc.NewClient()
-        usernames := []string{}
-        req, err := http.NewRequest("GET", "https://api.github.com/users", nil)
-        if err != nil {
-                log.Fatalf("new request %v", err)
-        }
-        client.FetchJsonDataWithPath(req, &usernames, "$[*].login")
-        log.Println(usernames)
+	var usernames []string
+	restc.NewClient().GetJsonDataWithPath("https://api.github.com/users", &usernames, "$[*].login")
+	log.Println(usernames)
 }
 ```
