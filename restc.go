@@ -1,12 +1,14 @@
 package restc
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/eleme/jsonpath"
 	"github.com/gregjones/httpcache"
+	"github.com/gregjones/httpcache/diskcache"
 	"github.com/pkg/errors"
 )
 
@@ -29,13 +31,30 @@ func (client *Client) FetchJsonDataWithPath(request *http.Request, data interfac
 	if err != nil {
 		return errors.Wrap(err, "eval paths")
 	}
-	if result, ok := eval.Next(); ok {
-		json.Unmarshal(result.Value, data)
-	} else {
-		return fmt.Errorf("failed to get data from eval")
+
+	results := [][]byte{}
+	for {
+		result, ok := eval.Next()
+		if result != nil {
+			results = append(results, result.Value)
+		}
+		if !ok {
+			break
+		}
 	}
+
 	if eval.Error != nil {
 		return errors.Wrap(eval.Error, "eval next")
+	}
+
+	if len(results) <= 0 {
+		return fmt.Errorf("failed to get data from eval")
+	} else if len(results) == 1 {
+		json.Unmarshal(results[0], data)
+	} else {
+		resultBytes := append([]byte("["), bytes.Join(results, []byte(","))...)
+		resultBytes = append(resultBytes, ']')
+		json.Unmarshal(resultBytes, data)
 	}
 
 	return nil
@@ -59,6 +78,14 @@ func NewDebugClient(cache httpcache.Cache) *Client {
 	return &Client{
 		http.Client{
 			Transport: NewDebugTransport(cache),
+		},
+	}
+}
+
+func NewDebugClientWithDiskCache(dir string) *Client {
+	return &Client{
+		http.Client{
+			Transport: NewDebugTransport(diskcache.New(dir)),
 		},
 	}
 }
