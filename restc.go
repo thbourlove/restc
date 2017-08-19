@@ -81,6 +81,13 @@ func (client *Client) FetchJsonData(request *http.Request, data interface{}) err
 	if err != nil {
 		return errors.Wrap(err, "client do request")
 	}
+
+	if response.StatusCode < 200 || response.StatusCode > 299 {
+		defer response.Body.Close()
+		bodyBytes, _ := ioutil.ReadAll(response.Body)
+		return fmt.Errorf("error response, code: %d; body: %s", response.StatusCode, string(bodyBytes))
+	}
+
 	defer response.Body.Close()
 
 	decoder := json.NewDecoder(response.Body)
