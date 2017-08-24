@@ -18,11 +18,19 @@ type Client struct {
 }
 
 func (client *Client) GetJsonDataWithPath(url string, data interface{}, path string) error {
-	req, err := http.NewRequest("GET", "https://api.github.com/users", nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return errors.Wrap(err, "new request")
 	}
 	return client.FetchJsonDataWithPath(req, data, path)
+}
+
+func (client *Client) GetJsonData(url string, data interface{}) error {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return errors.Wrap(err, "new request")
+	}
+	return client.FetchJsonData(req, data)
 }
 
 func (client *Client) FetchJsonDataWithPath(request *http.Request, data interface{}, path string) error {
